@@ -13,7 +13,7 @@ struct PictureAppRunData
     unsigned long pic_perMillis;      // 图片上一回更新的时间
     unsigned long picRefreshInterval; // 图片播放的时间间隔(10s)
 
-    File_Info *image_file;      // movie文件夹下的文件指针头
+    File_Info *image_file;      // 文件夹节点
     File_Info *pfile;           // 指向当前播放的文件节点
     int image_pos_increate = 1; // 文件的遍历方向
     bool tftSwapStatus;
@@ -132,8 +132,10 @@ static void picture_process(AppController *sys,
         Serial.println(file_name);
         if (NULL != strstr(file_name, ".jpg") || NULL != strstr(file_name, ".JPG"))
         {
-            // 直接解码jpg格式的图片
-            TJpgDec.drawSdJpg(0, 0, file_name);
+            load_scr();
+            uint16_t w = 200, h = 200;
+            // TJpgDec.getSdJpgSize(&w, &h, file_name);
+            TJpgDec.drawSdJpg((240-w)/2, (240-h)/2, file_name);
         }
         else if (NULL != strstr(file_name, ".bin") || NULL != strstr(file_name, ".BIN"))
         {

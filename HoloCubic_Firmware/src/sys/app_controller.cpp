@@ -83,7 +83,7 @@ int AppController::app_uninstall(const APP_OBJ *app) // 将APP从app_controller�
 
 int AppController::main_process(Imu_Action *act_info)
 {
-    if (UNKNOWN != act_info->active)
+    if (UNKNOWN != act_info->active && SHAKE != act_info->active )
     {
         Serial.print(F("[Operate]\tact_info->active: "));
         Serial.println(active_type_info[act_info->active]);

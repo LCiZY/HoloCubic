@@ -30,13 +30,23 @@ void display_photo_init()
     photo_image = lv_img_create(image_scr, NULL);
 }
 
+
+void load_scr(void){
+    lv_obj_t *act_obj = lv_scr_act(); // 获取当前活动页
+    if (act_obj == image_scr)
+        return;
+    lv_obj_clean(act_obj); // 清空此前页面
+    lv_scr_load(image_scr);
+}
+
 void display_photo(const char *file_name, lv_scr_load_anim_t anim_type)
 {
     display_photo_init();
+    lv_obj_clean(image_scr); // 清空此前页面
     char lv_file_name[PIC_FILENAME_MAX_LEN] = {0};
     sprintf(lv_file_name, "S:%s", file_name);
     lv_img_set_src(photo_image, lv_file_name);
-    lv_obj_align(photo_image, NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(photo_image, image_scr, LV_ALIGN_CENTER, 0, 0);
     lv_scr_load_anim(image_scr, anim_type, 0, 0, false);
 }
 

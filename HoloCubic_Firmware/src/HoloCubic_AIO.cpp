@@ -4,7 +4,7 @@
   聚合多种APP，内置天气、时钟、相册、特效动画、视频播放、视频投影、
   浏览器文件修改。（各APP具体使用参考说明书）
 
-  Github repositories：https://github.com/ClimbSnail/HoloCubic_AIO
+  Github repositories：https://github.com/LCiZY/HoloCubic
 
   Last review/edit by ClimbSnail: 2021/08/21
  ****************************************************/
@@ -84,14 +84,14 @@ void setup()
 
     app_controller->init();
     app_controller->app_install(&together_app);
-    app_controller->app_install(&weather_app);
     app_controller->app_install(&picture_app);
+    app_controller->app_install(&weather_app);
     app_controller->app_install(&media_app);
     app_controller->app_install(&screen_share_app);
-    app_controller->app_install(&file_manager_app);
-    app_controller->app_install(&server_app);
     app_controller->app_install(&idea_app);
     app_controller->app_install(&settings_app);
+    app_controller->app_install(&server_app);
+    app_controller->app_install(&file_manager_app);
 
     // 优先显示屏幕 加快视觉上的开机时间
     app_controller->main_process(&mpu.action_info);

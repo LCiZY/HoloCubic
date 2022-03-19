@@ -163,6 +163,7 @@ File_Info *SdCard::listDir(const char *dirname)
     Serial.printf("Listing directory: %s\n", dirname);
 
     File root = SD.open(dirname);
+    
     if (!root)
     {
         Serial.println("Failed to open directory");

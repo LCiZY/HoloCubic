@@ -11,6 +11,8 @@
 struct TogetherAppRunData
 {
     bool init_get;
+    // File_Info *image_file;      // 文件夹节点
+    // File_Info *pfile;           // 指向当前播放的文件节点
 };
 
 // 常驻数据，可以不随APP的生命周期而释放或删除
@@ -30,6 +32,26 @@ static TogetherAppRunData *run_data = NULL;
 // 考虑到所有的APP公用内存，尽量减少 forever_data 的数据占用
 static TogetherAppForeverData forever_data;
 
+static File_Info *get_next_file(File_Info *p_cur_file, int direction)
+{
+    // 得到 p_cur_file 的下一个 类型为FILE_TYPE_FILE 的文件（即下一个非文件夹文件）
+    if (NULL == p_cur_file)
+        return NULL;
+
+    File_Info *pfile = NULL;
+    while (pfile != p_cur_file)
+    {
+        pfile = direction == 1 ? p_cur_file->next_node : p_cur_file->front_node;
+        if(pfile == NULL)
+            return NULL;
+        if (FILE_TYPE_FILE == pfile->file_type)
+            break;
+    }
+    if (FILE_TYPE_FILE != pfile->file_type)
+        return NULL;
+    return pfile;
+}
+
 static int together_init(void)
 {
     // 初始化运行时的参数
@@ -43,7 +65,8 @@ static int together_init(void)
     }
     
     run_data->init_get = false;
-    
+    // run_data->image_file = tf.listDir(WE_IMAGE_PATH);
+    // run_data->pfile = run_data->image_file;
     // 使用 forever_data 中的变量，任何函数都可以用
     //Serial.print(forever_data.val1);
 
@@ -55,6 +78,46 @@ static int together_init(void)
     //g_flashCfg.writeFile("/together.cfg", "value1=100\nvalue2=200");
 }
 
+static void display_us(ACTIVE_TYPE active){ // 展示we目录下的bin文件
+    // if(run_data->image_file != NULL && get_next_file(run_data->image_file, 1) != NULL) { // 
+    //     static uint32_t last_tick = 0;
+    //     uint32_t t = lv_tick_get();
+    //     if (t - last_tick > 60000) {
+    //         last_tick = t;
+    //         static int direction = 1;
+    //         if(TURN_RIGHT == active) {direction = 1;}
+    //         if(TURN_LEFT == active) {direction = -1;}
+    //         File_Info *pfile = get_next_file(run_data->pfile, direction);
+    //         if(pfile != NULL) {
+    //             run_data->pfile = pfile;
+    //             char file_name[PIC_FILENAME_MAX_LEN] = {0};
+    //             snprintf(file_name, PIC_FILENAME_MAX_LEN, "%s/%s", run_data->image_file->file_name, run_data->pfile->file_name);
+    //              Serial.print(F("display us image: "));
+    //             Serial.println(file_name);
+    //             if (NULL != strstr(file_name, ".bin") || NULL != strstr(file_name, ".BIN"))
+    //                 display_us(file_name);
+    //         }
+    //     }
+    // }
+}
+
+static void shake2getTime(AppController *sys, ACTIVE_TYPE active){
+    if (TURN_RIGHT == active || TURN_LEFT == active){
+        sys->send_to(TOGETHER_APP_NAME, CTRL_NAME, APP_MESSAGE_WIFI_CONN, NULL, NULL);
+        Serial.printf("try to connect wifi, trigger by hand shake.\n");
+    }
+}
+
+static void getTimeTimer(AppController *sys, ACTIVE_TYPE active){
+    static uint32_t last_tick = 0;
+    uint32_t t = lv_tick_get();
+    if(t - last_tick > GET_TIME_INTERVAL || !run_data->init_get) {
+        last_tick = t;
+        run_data->init_get = true;
+        sys->send_to(TOGETHER_APP_NAME, CTRL_NAME, APP_MESSAGE_WIFI_CONN, NULL, NULL);
+    }
+}
+
 static void together_process(AppController *sys,
                             const Imu_Action *act_info)
 {
@@ -63,23 +126,16 @@ static void together_process(AppController *sys,
         sys->app_exit(); // 退出APP
         return;
     }
-    if (TURN_RIGHT == act_info->active || TURN_LEFT == act_info->active)
-    {
-        sys->send_to(TOGETHER_APP_NAME, CTRL_NAME, APP_MESSAGE_WIFI_CONN, NULL, NULL);
-        Serial.printf("try to connect wifi, trigger by hand shake.\n");
-    }
+
+    shake2getTime(sys, act_info->active);
+    getTimeTimer(sys, act_info->active);
+    
     
 
-    static uint32_t last_tick = 0;
-    uint32_t t = lv_tick_get();
-    if(t - last_tick > GET_TIME_INTERVAL || !run_data->init_get) {
-        last_tick = t;
-        run_data->init_get = true;
-        sys->send_to(TOGETHER_APP_NAME, CTRL_NAME, APP_MESSAGE_WIFI_CONN, NULL, NULL);
-    }
-
-
     display_together(forever_data.networkTime, forever_data.t);
+    display_us(act_info->active);
+    
+
     // 发送请求。如果是wifi相关的消息，当请求完成后自动会调用 together_message_handle 函数
     // sys->send_to(TOGETHER_APP_NAME, CTRL_NAME,
     //              APP_MESSAGE_WIFI_CONN, (void *)run_data->val1, NULL);
@@ -91,6 +147,7 @@ static void together_process(AppController *sys,
 static int together_exit_callback(void *param)
 {
     together_gui_del();
+    //release_file_info(run_data->image_file);
     if(run_data != NULL){
         // 释放资源
         free(run_data);

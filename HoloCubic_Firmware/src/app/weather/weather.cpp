@@ -312,7 +312,7 @@ static void weather_process(AppController *sys,
     if (run_data->clock_page == 0)
     {
         display_weather(run_data->wea, anim_type);
-        if (0x01 == run_data->coactusUpdateFlag || doDelayMillisTime(cfg_data.weatherUpdataInterval, &run_data->preWeatherMillis, false))
+        if (0x01 == run_data->coactusUpdateFlag || doDelayMillisTime(3600000, &run_data->preWeatherMillis, false))//cfg_data.weatherUpdataInterval
         {
             sys->send_to(WEATHER_APP_NAME, CTRL_NAME,
                          APP_MESSAGE_WIFI_CONN, (void *)UPDATE_NOW, NULL);

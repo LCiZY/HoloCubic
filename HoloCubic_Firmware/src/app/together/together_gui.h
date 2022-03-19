@@ -12,8 +12,9 @@ extern "C"
         lv_task_handler(); //等待动画完成
 
     void together_gui_init(void);
-    void display_together(long long networkTime, uint32_t t);
     void together_gui_del(void);
+    void display_together(long long networkTime, uint32_t t);
+    void display_us(const char *file_name);
 
 #ifdef __cplusplus
 } /* extern "C" */

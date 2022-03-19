@@ -18,6 +18,7 @@ extern "C"
     void display_photo_init(void);
     void display_photo(const char *file_name, lv_scr_load_anim_t anim_type);
     void photo_gui_del(void);
+    void load_scr(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

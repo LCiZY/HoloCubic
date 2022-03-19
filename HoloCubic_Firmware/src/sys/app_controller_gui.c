@@ -52,6 +52,7 @@ void display_app_scr_init(const void *src_img_path, const char *app_name)
     lv_obj_t *act_obj = lv_scr_act(); // 获取当前活动页
     if (act_obj == app_scr)
     {
+        
         // 防止一些不适用lvgl的APP退出 造成画面在无其他动作情况下无法绘制更新
         lv_scr_load_anim(app_scr, LV_SCR_LOAD_ANIM_NONE, 300, 300, false);
         return;

@@ -22,6 +22,9 @@ LV_IMG_DECLARE(flowers_5)
 LV_IMG_DECLARE(note)
 LV_IMG_DECLARE(transparent)
 LV_IMG_DECLARE(photo_frame)
+LV_IMG_DECLARE(we_0)
+LV_IMG_DECLARE(we_1)
+LV_IMG_DECLARE(we_2)
 
 #define PIC_FILENAME_MAX_LEN 100
 
@@ -57,6 +60,9 @@ struct Gif* cuteEmojis[] = {
     &gif_obj_yangbaobao3, &gif_obj_yangbaobao4,
 };
 
+const int our_photo_num = 3;
+const void *our_photo[] = {&we_0,&we_1,&we_2};
+
 void together_gui_init(void) // style init
 { 
     if(together_scr == lv_scr_act())
@@ -82,13 +88,14 @@ void together_gui_init(void) // style init
 
 }
 
-
 void UIInit(){ // ui init
     if(together_scr == NULL) {
         together_scr = lv_obj_create(NULL, NULL);
     }
     if(together_scr == lv_scr_act())
         return;
+    else
+        lv_obj_clean(lv_scr_act());
     
 	la_name = lv_label_create(together_scr, NULL);
     lv_obj_add_style(la_name, LV_LABEL_PART_MAIN, &name_style);
@@ -115,7 +122,7 @@ void UIInit(){ // ui init
 	lv_obj_add_style(la_sec, LV_LABEL_PART_MAIN, &time_style);
     lv_label_set_recolor(la_sec , true);
     lv_label_set_text_fmt(la_sec , "%10d秒", 123904400);
-	lv_obj_align(la_sec, la_day, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+	lv_obj_align(la_sec, la_day, LV_ALIGN_OUT_RIGHT_MID, 5, 0);
 
 
 // 	img_heart = lv_img_create(together_scr, NULL);
@@ -147,7 +154,7 @@ void UIInit(){ // ui init
 
     img_we = lv_img_create(together_scr, NULL);
 	lv_obj_align(img_we, together_scr, LV_ALIGN_IN_BOTTOM_RIGHT, 10, -50);
-    lv_img_set_src(img_we, &we);
+    lv_img_set_src(img_we, our_photo[our_photo_num-1]);
     
     img_photo_frame= lv_img_create(together_scr, NULL);
 	lv_obj_align(img_photo_frame, img_we, LV_ALIGN_CENTER, 2, -15);
@@ -196,12 +203,23 @@ void display_time_ani(long long networkTime, uint32_t t){
     }
 }
 
-void display_us(const char *file_name, lv_scr_load_anim_t anim_type)
+void display_us(const char *file_name)
 {
     char lv_file_name[PIC_FILENAME_MAX_LEN] = {0};
     sprintf(lv_file_name, "S:%s", file_name);
     lv_img_set_src(img_we, lv_file_name);
-    lv_obj_set_pos(img_we, 0 , 0);
+}
+
+void display_our_photo()
+{
+    static long long last_tick = 0;
+    uint32_t t = lv_tick_get();
+    if ( t - last_tick > 30000) {
+        static unsigned short page = 0;
+        last_tick = t;
+        lv_img_set_src(img_we, our_photo[page++%our_photo_num]);
+    }
+    
 }
 
 void display_cute_emoji()
@@ -227,6 +245,7 @@ void display_together(long long networkTime, uint32_t t) {
     displayGif(img_twinkle, &gif_obj_twinkle);
     display_time_ani(networkTime, t);
     display_cute_emoji();
+    display_our_photo();
 }
 
 

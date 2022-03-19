@@ -121,7 +121,7 @@ void init_page_header()
     webpage_header += F("<li><a href='/upload'>Upload</a></li>");
     webpage_header += F("<li><a href='/delete'>Delete</a></li>");
     webpage_header += F("<li><a href='/sys_setting'>系统设置</a></li>");
-    webpage_header += F("<li><a href='/weather_setting'>最版天气</a></li>");
+    webpage_header += F("<li><a href='/weather_setting'>新版天气</a></li>");
     webpage_header += F("<li><a href='/weather_old_setting'>旧版天气</a></li>");
     webpage_header += F("<li><a href='/bili_setting'>B站</a></li>");
     webpage_header += F("</ul>");

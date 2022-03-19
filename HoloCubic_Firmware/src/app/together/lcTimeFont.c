@@ -13,6 +13,10 @@
 
 
 static const uint8_t glyph_bitmap[] = {
+/*   */
+
+
+
 /* 0 */
 0x00,0x02,0x53,0x00,0x00,  //...+*+...
 0x00,0x7b,0x7a,0x90,0x00,  //..*@*%%+.
@@ -251,6 +255,7 @@ static const uint8_t glyph_bitmap[] = {
 
 
 static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
+    {.bitmap_index = 0,	.adv_w = 8, .box_h = 0, .box_w = 8, .ofs_x = 0, .ofs_y = 5},/*( )*/
     {.bitmap_index = 0,	.adv_w = 9, .box_h = 12, .box_w = 10, .ofs_x = 0, .ofs_y = 4},/*(0)*/
     {.bitmap_index = 60,	.adv_w = 5, .box_h = 11, .box_w = 6, .ofs_x = 0, .ofs_y = 5},/*(1)*/
     {.bitmap_index = 93,	.adv_w = 7, .box_h = 11, .box_w = 6, .ofs_x = 1, .ofs_y = 5},/*(2)*/
@@ -270,6 +275,7 @@ static const lv_font_fmt_txt_glyph_dsc_t glyph_dsc[] = {
 
 
 static const uint16_t unicode_list_1[] = {
+    0x0020,	/*( )*/
     0x0030,	/*(0)*/
     0x0031,	/*(1)*/
     0x0032,	/*(2)*/
@@ -291,13 +297,13 @@ static const uint16_t unicode_list_1[] = {
 
 static const lv_font_fmt_txt_cmap_t cmaps[] = {
     {
-        .range_start = 0x0030,
+        .range_start = 0x0020,
         .range_length = 0x8425,
         .type = LV_FONT_FMT_TXT_CMAP_SPARSE_TINY,
         .glyph_id_start = 0,
         .unicode_list = unicode_list_1,
         .glyph_id_ofs_list = NULL,
-        .list_length = 15,
+        .list_length = 16,
     }
 };
 
@@ -314,7 +320,7 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
     .kern_classes = 0,
 
     .last_letter = 0x8425,
-    .last_glyph_id = 14,
+    .last_glyph_id = 15,
 };
 
 
@@ -386,7 +392,7 @@ static bool __user_font_get_glyph_dsc(const lv_font_t * font, lv_font_glyph_dsc_
 }
 
 
-//YouYuan,,-1
+//微软雅黑,Regular,12
 //字模高度：17
 //内部字体
 //使用排序和二分查表
