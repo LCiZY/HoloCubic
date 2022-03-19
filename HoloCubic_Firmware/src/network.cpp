@@ -68,7 +68,18 @@ boolean Network::start_conn_wifi(const char *ssid, const char *password)
     WiFi.enableSTA(true);
     // 修改主机名
     WiFi.setHostname(HOST_NAME);
-    WiFi.begin(ssid, password);
+    wl_status_t state = WiFi.begin(ssid, password);
+    Serial.printf("wifi begin state: %d", state);
+    /*
+        WL_NO_SHIELD        = 255,   // for compatibility with WiFi Shield library
+        WL_IDLE_STATUS      = 0,
+        WL_NO_SSID_AVAIL    = 1,
+        WL_SCAN_COMPLETED   = 2,
+        WL_CONNECTED        = 3,
+        WL_CONNECT_FAILED   = 4,
+        WL_CONNECTION_LOST  = 5,
+        WL_DISCONNECTED     = 6
+    */
     m_preDisWifiConnInfoMillis = millis();
 
     // if (!WiFi.config(local_ip, gateway, subnet, dns))

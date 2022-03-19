@@ -19,6 +19,7 @@ void example_gui_init(void)
 
 void display_example(const char *file_name, lv_scr_load_anim_t anim_type)
 {
+    
 }
 
 void example_gui_del(void)

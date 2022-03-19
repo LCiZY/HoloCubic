@@ -304,7 +304,12 @@ bool AppController::wifi_event(APP_MESSAGE_TYPE type)
         // 更新请求
         // CONN_ERROR == g_network.end_conn_wifi() ||
         if (false == m_wifi_status)
-        {
+        {   
+            // static int i = 0;
+            // ++i;
+            // const char* ssid , pwd;
+            // const char* ssid = i&1?sys_cfg.ssid_0.c_str():sys_cfg.ssid_1.c_str();
+            // const char* pwd = i&1?sys_cfg.password_0.c_str():sys_cfg.password_1.c_str();
             g_network.start_conn_wifi(sys_cfg.ssid_0.c_str(), sys_cfg.password_0.c_str());
             m_wifi_status = true;
         }

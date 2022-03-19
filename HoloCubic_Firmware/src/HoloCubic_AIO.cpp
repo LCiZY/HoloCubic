@@ -16,16 +16,14 @@
 #include "sys/app_controller.h"
 
 #include "app/weather/weather.h"
-#include "app/bilibili_fans/bilibili.h"
+#include "app/together/together.h"
 #include "app/server/server.h"
 #include "app/idea_anim/idea.h"
 #include "app/settings/settings.h"
-#include "app/game_2048/game_2048.h"
 #include "app/picture/picture.h"
 #include "app/media_player/media_player.h"
 #include "app/screen_share/screen_share.h"
 #include "app/file_manager/file_manager.h"
-#include "app/weather_old/weather_old.h"
 
 #include <SPIFFS.h>
 #include <esp32-hal.h>
@@ -40,6 +38,11 @@ void setup()
 
     Serial.println(F("\nAIO (All in one) version " AIO_VERSION "\n"));
     app_controller = new AppController(); // APP控制器
+
+    // app_controller->sys_cfg.ssid_0 = "khwf";
+    // app_controller->sys_cfg.password_0 = "307zuiliang^100";
+    app_controller->sys_cfg.ssid_0 = "Redmicc";
+    app_controller->sys_cfg.password_0 = "1443351569.";
     
     // 需要放在Setup里初始化
     if (!SPIFFS.begin(true))
@@ -65,7 +68,7 @@ void setup()
     /*** Init screen ***/
     // screen.init(app_controller->sys_cfg.rotation,
     //             app_controller->sys_cfg.backLight);
-    screen.init(app_controller->sys_cfg.rotation,
+    screen.init(4,
                 app_controller->sys_cfg.backLight);
 
     /*** Init on-board RGB ***/
@@ -80,17 +83,15 @@ void setup()
     lv_fs_if_init();
 
     app_controller->init();
+    app_controller->app_install(&together_app);
     app_controller->app_install(&weather_app);
-    app_controller->app_install(&weather_old_app);
     app_controller->app_install(&picture_app);
     app_controller->app_install(&media_app);
     app_controller->app_install(&screen_share_app);
     app_controller->app_install(&file_manager_app);
     app_controller->app_install(&server_app);
     app_controller->app_install(&idea_app);
-    app_controller->app_install(&bilibili_app);
     app_controller->app_install(&settings_app);
-    app_controller->app_install(&game_2048_app);
 
     // 优先显示屏幕 加快视觉上的开机时间
     app_controller->main_process(&mpu.action_info);
