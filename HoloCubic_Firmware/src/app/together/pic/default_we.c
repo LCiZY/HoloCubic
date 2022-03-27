@@ -7,10 +7,10 @@
 #ifndef LV_ATTRIBUTE_MEM_ALIGN
 #define LV_ATTRIBUTE_MEM_ALIGN
 #endif
-#ifndef LV_ATTRIBUTE_IMG_WE_1
-#define LV_ATTRIBUTE_IMG_WE_1
+#ifndef LV_ATTRIBUTE_IMG_DEFAULT_WE
+#define LV_ATTRIBUTE_IMG_DEFAULT_WE
 #endif
-const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_WE_1 uint8_t we_1_map[] = {
+const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_DEFAULT_WE uint8_t default_we_map[] = {
   0xc3, 0xc2, 0xd2, 0xff, 	/*Color of index 0*/
   0x8d, 0x93, 0xab, 0xff, 	/*Color of index 1*/
   0x6d, 0x7c, 0xa3, 0xff, 	/*Color of index 2*/
@@ -91,12 +91,12 @@ const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_WE_1 uint8_t we_1_map[] = {
   0x1a, 0x66, 0xf4, 0x66, 0xff, 0xfb, 0xff, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xb6, 0xbc, 0xcc, 0xcc, 0xcc, 0xcc, 0xbc, 0xbb, 0xff, 0xff, 0xff, 0xfb, 0xbb, 0x1a, 0xaa, 0xa1, 0xee, 0x1f, 0xf0, 
 };
 
-const lv_img_dsc_t we_1 = {
+const lv_img_dsc_t default_we = {
   .header.cf = LV_IMG_CF_INDEXED_4BIT,
   .header.always_zero = 0,
   .header.reserved = 0,
   .header.w = 61,
   .header.h = 61,
   .data_size = 1956,
-  .data = we_1_map,
+  .data = default_we_map,
 };

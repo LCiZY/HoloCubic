@@ -6,13 +6,13 @@
 #define TOGETHER_APP_NAME "We"
 #define TIME_API "http://api.m.taobao.com/rest/api3.do?api=mtop.common.gettimestamp"
 #define GET_TIME_INTERVAL 1800000 // 每三十分钟自动请求网络时间
+#define DISPLAY_US_INTERVAL 30000 // 每三十秒自动切换us
 
 // 动态数据，APP的生命周期结束也需要释放它
 struct TogetherAppRunData
 {
-    bool init_get;
-    // File_Info *image_file;      // 文件夹节点
-    // File_Info *pfile;           // 指向当前播放的文件节点
+    File_Info *image_file;      // 文件夹节点
+    File_Info *pfile;           // 指向当前播放的文件节点
 };
 
 // 常驻数据，可以不随APP的生命周期而释放或删除
@@ -60,13 +60,12 @@ static int together_init(void)
     run_data = (TogetherAppRunData *)calloc(1, sizeof(TogetherAppRunData));
     if(!hadOpened){
         hadOpened = true;
-        forever_data.networkTime = 1647613221000;
+        forever_data.networkTime = 1649304000000;
         forever_data.t = lv_tick_get();
     }
     
-    run_data->init_get = false;
-    // run_data->image_file = tf.listDir(WE_IMAGE_PATH);
-    // run_data->pfile = run_data->image_file;
+    run_data->image_file = tf.listDir(WE_IMAGE_PATH);
+    run_data->pfile = run_data->image_file;
     // 使用 forever_data 中的变量，任何函数都可以用
     //Serial.print(forever_data.val1);
 
@@ -79,26 +78,26 @@ static int together_init(void)
 }
 
 static void display_us(ACTIVE_TYPE active){ // 展示we目录下的bin文件
-    // if(run_data->image_file != NULL && get_next_file(run_data->image_file, 1) != NULL) { // 
-    //     static uint32_t last_tick = 0;
-    //     uint32_t t = lv_tick_get();
-    //     if (t - last_tick > 60000) {
-    //         last_tick = t;
-    //         static int direction = 1;
-    //         if(TURN_RIGHT == active) {direction = 1;}
-    //         if(TURN_LEFT == active) {direction = -1;}
-    //         File_Info *pfile = get_next_file(run_data->pfile, direction);
-    //         if(pfile != NULL) {
-    //             run_data->pfile = pfile;
-    //             char file_name[PIC_FILENAME_MAX_LEN] = {0};
-    //             snprintf(file_name, PIC_FILENAME_MAX_LEN, "%s/%s", run_data->image_file->file_name, run_data->pfile->file_name);
-    //              Serial.print(F("display us image: "));
-    //             Serial.println(file_name);
-    //             if (NULL != strstr(file_name, ".bin") || NULL != strstr(file_name, ".BIN"))
-    //                 display_us(file_name);
-    //         }
-    //     }
-    // }
+    if(run_data->image_file != NULL && get_next_file(run_data->image_file, 1) != NULL) { // 
+        static uint32_t last_tick = 0;
+        uint32_t t = lv_tick_get();
+        if (t - last_tick > DISPLAY_US_INTERVAL) {
+            last_tick = t;
+            static int direction = 1;
+            if(TURN_RIGHT == active) {direction = 1;}
+            if(TURN_LEFT == active) {direction = -1;}
+            File_Info *pfile = get_next_file(run_data->pfile, direction);
+            if(pfile != NULL) {
+                run_data->pfile = pfile;
+                char file_name[PIC_FILENAME_MAX_LEN] = {0};
+                snprintf(file_name, PIC_FILENAME_MAX_LEN, "%s/%s", run_data->image_file->file_name, run_data->pfile->file_name);
+                Serial.print(F("display us image: "));
+                Serial.println(file_name);
+                if (NULL != strstr(file_name, ".bin") || NULL != strstr(file_name, ".BIN"))
+                    display_us(file_name);
+            }
+        }
+    }
 }
 
 static void shake2getTime(AppController *sys, ACTIVE_TYPE active){
@@ -111,15 +110,14 @@ static void shake2getTime(AppController *sys, ACTIVE_TYPE active){
 static void getTimeTimer(AppController *sys, ACTIVE_TYPE active){
     static uint32_t last_tick = 0;
     uint32_t t = lv_tick_get();
-    if(t - last_tick > GET_TIME_INTERVAL || !run_data->init_get) {
+    if(t - last_tick > GET_TIME_INTERVAL || last_tick == 0) {
         last_tick = t;
-        run_data->init_get = true;
         sys->send_to(TOGETHER_APP_NAME, CTRL_NAME, APP_MESSAGE_WIFI_CONN, NULL, NULL);
     }
 }
 
 static void together_process(AppController *sys,
-                            const Imu_Action *act_info)
+                            const ImuAction *act_info)
 {
     if (RETURN == act_info->active)
     {
@@ -133,7 +131,7 @@ static void together_process(AppController *sys,
     
 
     display_together(forever_data.networkTime, forever_data.t);
-    display_us(act_info->active);
+    // display_us(act_info->active); //播放bin文件储存的图片, 有bug
     
 
     // 发送请求。如果是wifi相关的消息，当请求完成后自动会调用 together_message_handle 函数
@@ -147,7 +145,7 @@ static void together_process(AppController *sys,
 static int together_exit_callback(void *param)
 {
     together_gui_del();
-    //release_file_info(run_data->image_file);
+    release_file_info(run_data->image_file);
     if(run_data != NULL){
         // 释放资源
         free(run_data);

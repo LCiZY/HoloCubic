@@ -6,8 +6,10 @@
 #include "common.h"
 
 #define SERVER_REFLUSH_INTERVAL 5000UL // 配置界面重新刷新时间(5s)
-
+#define DNS_PORT 53                    // DNS端口
 WebServer server(80);
+
+DNSServer dnsServer;
 
 struct ServerAppRunData
 {
@@ -21,7 +23,7 @@ static ServerAppRunData *run_data = NULL;
 void start_web_config()
 {
     //首页
-    server.on("/", HomePage);
+    server.on("/", HTTP_GET, HomePage);
 
     init_page_header();
     init_page_footer();
@@ -31,9 +33,13 @@ void start_web_config()
     server.on("/delete_result", delete_result);
 
     server.on("/sys_setting", sys_setting);
+    server.on("/rgb_setting", rgb_setting);
     server.on("/weather_setting", weather_setting);
     server.on("/weather_old_setting", weather_old_setting);
     server.on("/bili_setting", bili_setting);
+    server.on("/picture_setting", picture_setting);
+    server.on("/media_setting", media_setting);
+    server.on("/screen_setting", screen_setting);
     server.on(
         "/fupload", HTTP_POST,
         []()
@@ -42,13 +48,19 @@ void start_web_config()
 
     //连接
     server.on("/saveSysConf", saveSysConf);
+    server.on("/saveRgbConf", saveRgbConf);
     server.on("/saveWeatherConf", saveWeatherConf);
     server.on("/saveWeatherOldConf", saveWeatherOldConf);
     server.on("/saveBiliConf", saveBiliConf);
+    server.on("/savePictureConf", savePictureConf);
+    server.on("/saveMediaConf", saveMediaConf);
+    server.on("/saveScreenConf", saveScreenConf);
 
     server.begin();
     // MDNS.addService("http", "tcp", 80);
     Serial.println("HTTP server started");
+
+    dnsServer.start(DNS_PORT, "*", gateway);
 }
 
 void stop_web_config()
@@ -70,7 +82,7 @@ static int server_init(void)
 }
 
 static void server_process(AppController *sys,
-                    const Imu_Action *action)
+                           const ImuAction *action)
 {
     lv_scr_load_anim_t anim_type = LV_SCR_LOAD_ANIM_NONE;
 
@@ -98,6 +110,7 @@ static void server_process(AppController *sys,
     else if (1 == run_data->web_start)
     {
         server.handleClient(); // 一定需要放在循环里扫描
+        dnsServer.processNextRequest();
         if (doDelayMillisTime(SERVER_REFLUSH_INTERVAL, &run_data->serverReflushPreMillis, false) == true)
         {
             // 发送wifi维持的心跳
@@ -123,8 +136,8 @@ static int server_exit_callback(void *param)
 }
 
 static void server_message_handle(const char *from, const char *to,
-                           APP_MESSAGE_TYPE type, void *message,
-                           void *ext_info)
+                                  APP_MESSAGE_TYPE type, void *message,
+                                  void *ext_info)
 {
     switch (type)
     {

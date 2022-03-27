@@ -42,14 +42,15 @@ static int example_init(void)
 
     // 如果有需要持久化配置文件 可以调用此函数将数据存在flash中
     // 配置文件名最好以APP名为开头 以".cfg"结尾，以免多个APP读取混乱
-    String info = g_flashCfg.readFile("/example.cfg");
+    char info[128] = {0};
+    uint16_t size = g_flashCfg.readFile("/example.cfg", (uint8_t *)info);
     // 解析数据
     // 将配置数据保存在文件中（持久化）
     g_flashCfg.writeFile("/example.cfg", "value1=100\nvalue2=200");
 }
 
 static void example_process(AppController *sys,
-                            const Imu_Action *act_info)
+                            const ImuAction *act_info)
 {
     if (RETURN == act_info->active)
     {

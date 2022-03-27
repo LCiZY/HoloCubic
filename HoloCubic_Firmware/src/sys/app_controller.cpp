@@ -21,10 +21,9 @@ AppController::AppController(const char *name)
     m_preWifiReqMillis = millis();
     // 设置CPU主频
     setCpuFrequencyMhz(80);
-    uint32_t freq = getCpuFrequencyMhz(); // In MHz
     // uint32_t freq = getXtalFrequencyMhz(); // In MHz
     Serial.print(F("getCpuFrequencyMhz: "));
-    Serial.println(freq);
+    Serial.println(getCpuFrequencyMhz());
 }
 
 void AppController::init(void)
@@ -81,7 +80,7 @@ int AppController::app_uninstall(const APP_OBJ *app) // 将APP从app_controller�
     return 0;
 }
 
-int AppController::main_process(Imu_Action *act_info)
+int AppController::main_process(ImuAction *act_info)
 {
     if (UNKNOWN != act_info->active && SHAKE != act_info->active )
     {
@@ -91,8 +90,8 @@ int AppController::main_process(Imu_Action *act_info)
     // 扫描事件
     req_event_deal();
 
-    // wifi自动关闭
-    if (true == m_wifi_status && doDelayMillisTime(WIFI_LIFE_CYCLE, &m_preWifiReqMillis, false))
+    // wifi自动关闭(在节能模式下)
+    if (0 == sys_cfg.power_mode && true == m_wifi_status && doDelayMillisTime(WIFI_LIFE_CYCLE, &m_preWifiReqMillis, false))
     {
         send_to(CTRL_NAME, CTRL_NAME, APP_MESSAGE_WIFI_DISCONN, 0, NULL);
     }
@@ -172,7 +171,7 @@ int AppController::send_to(const char *from, const char *to,
             return 1;
         }
         // 发给控制器的消息(目前都是wifi事件)
-        EVENT_OBJ new_event = {fromApp, type, message};
+        EVENT_OBJ new_event = {fromApp, type, message, 3, 0, 0};
         eventList.push_back(new_event);
         Serial.print("[EVENT]\tAdd -> " + String(app_event_type_info[type]));
         Serial.print(F("\tEventList Size: "));
@@ -197,94 +196,48 @@ int AppController::send_to(const char *from, const char *to,
     }
     return 0;
 }
-void AppController::deal_config(APP_MESSAGE_TYPE type,
-                                const char *key, char *value)
-{
-    if (APP_MESSAGE_GET_PARAM == type)
-    {
-        if (!strcmp(key, "ssid_0"))
-        {
-            snprintf(value, 32, "%s", sys_cfg.ssid_0.c_str());
-        }
-        else if (!strcmp(key, "password_0"))
-        {
-            snprintf(value, 32, "%s", sys_cfg.password_0.c_str());
-        }
-        else if (!strcmp(key, "power_mode"))
-        {
-            snprintf(value, 32, "%u", sys_cfg.power_mode);
-        }
-        else if (!strcmp(key, "backLight"))
-        {
-            snprintf(value, 32, "%u", sys_cfg.backLight);
-        }
-        else if (!strcmp(key, "rotation"))
-        {
-            snprintf(value, 32, "%u", sys_cfg.rotation);
-        }
-        else if (!strcmp(key, "auto_calibration_mpu"))
-        {
-            snprintf(value, 32, "%u", sys_cfg.auto_calibration_mpu);
-        }
-        else if (!strcmp(key, "mpu_order"))
-        {
-            snprintf(value, 32, "%u", sys_cfg.mpu_order);
-        }
-    }
-    else if (APP_MESSAGE_SET_PARAM == type)
-    {
-        if (!strcmp(key, "ssid_0"))
-        {
-            sys_cfg.ssid_0 = value;
-        }
-        else if (!strcmp(key, "password_0"))
-        {
-            sys_cfg.password_0 = value;
-        }
-        else if (!strcmp(key, "power_mode"))
-        {
-            sys_cfg.power_mode = String(value).toInt();
-        }
-        else if (!strcmp(key, "backLight"))
-        {
-            sys_cfg.backLight = String(value).toInt();
-        }
-        else if (!strcmp(key, "rotation"))
-        {
-            sys_cfg.rotation = String(value).toInt();
-        }
-        else if (!strcmp(key, "auto_calibration_mpu"))
-        {
-            sys_cfg.auto_calibration_mpu = String(value).toInt();
-        }
-        else if (!strcmp(key, "mpu_order"))
-        {
-            sys_cfg.mpu_order = String(value).toInt();
-        }
-    }
-}
 
 int AppController::req_event_deal(void)
 {
     // 请求事件的处理
-    for (std::list<EVENT_OBJ>::iterator event = eventList.begin(); event != eventList.end(); ++event)
+    for (std::list<EVENT_OBJ>::iterator event = eventList.begin(); event != eventList.end();)
     {
+        if ((*event).nextRunTime > millis())
+        {
+            ++event;
+            continue;
+        }
         // 后期可以拓展其他事件的处理
         bool ret = wifi_event((*event).type);
         if (false == ret)
         {
             // 本事件没处理完成
+            (*event).retryCount += 1;
+            if ((*event).retryCount >= (*event).retryMaxNum)
+            {
+                //  多次重试失败
+                Serial.print("[EVENT]\tDelete -> " + String(app_event_type_info[(*event).type]));
+                event = eventList.erase(event); //删除该响应事件
+                Serial.print(F("\tEventList Size: "));
+                Serial.println(eventList.size());
+            }
+            else
+            {
+                // 下次重试
+                (*event).nextRunTime = millis() + 4000;
+                ++event;
+            }
             continue;
         }
 
         // 事件回调
-        if (NULL != (*event).from)
+        if (NULL != (*event).from && NULL != (*event).from->message_handle)
         {
             (*((*event).from->message_handle))(CTRL_NAME, (*event).from->app_name,
                                                (*event).type, (*event).info, NULL);
         }
         Serial.print("[EVENT]\tDelete -> " + String(app_event_type_info[(*event).type]));
-        eventList.erase(event); // 删除该响应完成的事件
+        event = eventList.erase(event); // 删除该响应完成的事件
         Serial.print(F("\tEventList Size: "));
         Serial.println(eventList.size());
     }
@@ -360,11 +313,15 @@ void AppController::app_exit()
     app_exit_flag = 0; // 退出APP
 
     // 清空该对象的所有请求
-    for (std::list<EVENT_OBJ>::iterator event = eventList.begin(); event != eventList.end(); ++event)
+    for (std::list<EVENT_OBJ>::iterator event = eventList.begin(); event != eventList.end();)
     {
         if (appList[cur_app_index] == (*event).from)
         {
-            eventList.erase(event); // 删除该响应事件
+            event = eventList.erase(event); // 删除该响应事件
+        }
+        else
+        {
+            ++event;
         }
     }
 
